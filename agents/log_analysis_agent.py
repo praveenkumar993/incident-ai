@@ -1,20 +1,4 @@
-from crewai import Agent
-
-log_analysis_agent = Agent(
-    role="Log Analysis Specialist",
-
-    goal="""
-    Analyze incident logs and identify critical system failures
-    """,
-
-    backstory="""
-    You are an expert SRE engineer specializing in 
-    distributed systems, production monitoring, 
-    and incident debugging.
-    """,
-
-    verbose=True
-)
+from configs.llm_config import llm
 
 
 def analyze_logs(logs):
@@ -23,21 +7,23 @@ def analyze_logs(logs):
 
     for log in logs:
 
-        service = log["service"]
-        severity = log["severity"]
-        message = log["message"]
+        prompt = f"""
+        Analyze this production incident log.
 
-        if severity == "critical":
+        Service: {log['service']}
+        Severity: {log['severity']}
+        Message: {log['message']}
 
-            print(f" CRITICAL issue detected in {service}")
-            print(f"   {message}\n")
+        Explain:
+        1. What the issue means
+        2. Why it may happen
+        3. How serious it is
+        """
 
-        elif severity == "high":
+        response = llm.invoke(prompt)
 
-            print(f" HIGH severity incident in {service}")
-            print(f"   {message}\n")
+        print(f"\n SERVICE: {log['service']}\n")
 
-        else:
+        print(response.content)
 
-            print(f" MEDIUM issue in {service}")
-            print(f"   {message}\n")
+        print("\n" + "="*60)
