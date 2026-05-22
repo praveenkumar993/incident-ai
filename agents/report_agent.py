@@ -1,45 +1,23 @@
 from crewai import Agent
 
+from configs.llm_config import llm
+
 report_agent = Agent(
 
     role="Incident Report Generator",
 
     goal="""
-    Generate structured production incident reports
+    Generate structured
+    incident response reports
     """,
 
     backstory="""
-    Expert in incident documentation,
-    operational reporting,
-    and production event summarization.
+    Expert technical documentation
+    specialist for production incidents
+    and operational reporting.
     """,
+
+    llm=llm,
 
     verbose=True
 )
-
-
-def generate_report(logs, root_causes, fixes):
-
-    print("\n FINAL INCIDENT REPORT\n")
-
-    print("INCIDENT LOGS:\n")
-
-    for log in logs:
-
-        print(
-            f"- {log['service']} | "
-            f"{log['severity']} | "
-            f"{log['message']}"
-        )
-
-    print("\nROOT CAUSES:\n")
-
-    for cause in root_causes:
-
-        print(f"- {cause}")
-
-    print("\nREMEDIATION ACTIONS:\n")
-
-    for fix in fixes:
-
-        print(f"- {fix}")

@@ -1,29 +1,24 @@
+from crewai import Agent
+
 from configs.llm_config import llm
 
+log_analysis_agent = Agent(
 
-def analyze_logs(logs):
+    role="Senior Log Analysis Engineer",
 
-    print("\n AI Incident Analysis\n")
+    goal="""
+    Analyze production incident logs
+    and identify operational failures
+    """,
 
-    for log in logs:
+    backstory="""
+    Expert SRE engineer specializing
+    in distributed systems,
+    observability,
+    and incident debugging.
+    """,
 
-        prompt = f"""
-        Analyze this production incident log.
+    llm=llm,
 
-        Service: {log['service']}
-        Severity: {log['severity']}
-        Message: {log['message']}
-
-        Explain:
-        1. What the issue means
-        2. Why it may happen
-        3. How serious it is
-        """
-
-        response = llm.invoke(prompt)
-
-        print(f"\n SERVICE: {log['service']}\n")
-
-        print(response.content)
-
-        print("\n" + "="*60)
+    verbose=True
+)

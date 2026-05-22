@@ -1,44 +1,25 @@
 from crewai import Agent
 
+from configs.llm_config import llm
+
 remediation_agent = Agent(
 
-    role="Incident Remediation Specialist",
+    role="Production Remediation Specialist",
 
     goal="""
-    Suggest remediation actions for production incidents
+    Suggest operational fixes
+    and remediation strategies
+    for production incidents
     """,
 
     backstory="""
-    Experienced DevOps engineer specializing
-    in production recovery and infrastructure stabilization.
+    Senior DevOps engineer
+    experienced in incident recovery,
+    scaling strategies,
+    and operational stabilization.
     """,
+
+    llm=llm,
 
     verbose=True
 )
-
-
-def suggest_fixes(root_causes):
-
-    fixes = []
-
-    for cause in root_causes:
-
-        if "database" in cause.lower():
-
-            fixes.append(
-                "Scale database replicas and increase connection pool"
-            )
-
-        elif "cpu" in cause.lower():
-
-            fixes.append(
-                "Scale application pods and investigate traffic spikes"
-            )
-
-        elif "cache" in cause.lower():
-
-            fixes.append(
-                "Restart Redis cache cluster and inspect cache hit ratio"
-            )
-
-    return fixes
