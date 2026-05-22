@@ -4,7 +4,7 @@ from configs.llm_config import llm
 
 report_agent = Agent(
 
-    role="Incident Report Generator",
+    role="incident report generator",
 
     goal="""
     Generate structured
@@ -18,6 +18,7 @@ report_agent = Agent(
     """,
 
     llm=llm,
+    allow_delegation=False,
 
-    verbose=True
+    verbose=False
 )

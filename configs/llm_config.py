@@ -9,5 +9,5 @@ load_dotenv()
 llm = ChatGroq(
     model_name="llama-3.1-8b-instant",
     groq_api_key=os.getenv("GROQ_API_KEY"),
-    temperature=0.3
+    temperature=0.1
 )

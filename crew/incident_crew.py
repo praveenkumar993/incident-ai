@@ -1,4 +1,4 @@
-from crewai import Task, Crew
+from crewai import Task, Crew, Process
 
 from agents.log_analysis_agent import (
     log_analysis_agent
@@ -22,15 +22,27 @@ def run_incident_crew(logs):
     log_task = Task(
 
         description=f"""
-        Analyze these production logs:
+You are analyzing REAL production logs.
 
-        {logs}
+IMPORTANT RULES:
+- ONLY use the provided logs
+- DO NOT invent services
+- DO NOT create fake incidents
+- DO NOT hallucinate infrastructure
+- ONLY analyze existing logs
 
-        Identify:
-        - operational failures
-        - severity
-        - infrastructure impact
-        """,
+Production Logs:
+{logs}
+
+For EACH log provide:
+1. Service Name
+2. Severity
+3. Operational Issue
+4. Infrastructure Impact
+5. Business Impact
+
+Return structured bullet points.
+""",
 
         agent=log_analysis_agent,
 
@@ -42,11 +54,24 @@ def run_incident_crew(logs):
     root_cause_task = Task(
 
         description=f"""
-        Identify probable root causes
-        for these incidents:
+Investigate ONLY the provided logs.
 
-        {logs}
-        """,
+IMPORTANT:
+- Use ONLY provided log data
+- Do NOT invent systems
+- Do NOT create fake reports
+
+Logs:
+{logs}
+
+For each incident identify:
+1. Probable root cause
+2. Why the issue happened
+3. Affected infrastructure
+4. Severity reasoning
+
+Return structured analysis.
+""",
 
         agent=root_cause_agent,
 
@@ -58,11 +83,23 @@ def run_incident_crew(logs):
     remediation_task = Task(
 
         description=f"""
-        Suggest remediation strategies
-        for these incidents:
+Based ONLY on the provided logs,
+suggest production remediation steps.
 
-        {logs}
-        """,
+Rules:
+- No hallucinated systems
+- No fake infrastructure
+- Ground all suggestions in logs
+
+Logs:
+{logs}
+
+For each incident provide:
+1. Immediate fix
+2. Long-term prevention
+3. Infrastructure recommendation
+4. Monitoring recommendation
+""",
 
         agent=remediation_agent,
 
@@ -74,10 +111,34 @@ def run_incident_crew(logs):
     report_task = Task(
 
         description="""
-        Generate final incident report
-        combining all investigations
-        and remediation findings.
-        """,
+Generate FINAL incident report using ONLY provided task outputs.
+
+DO NOT write introductory template sentences.
+
+DO NOT use placeholders like:
+- [Date]
+- [Time]
+- [Environment]
+
+If information is unavailable,
+simply omit it.
+
+STRICT RULES:
+- ONLY use outputs from previous agents
+- DO NOT invent incidents
+- DO NOT create fake services
+- Keep report concise and structured
+
+ONLY summarize findings from previous tasks.
+DO NOT create additional assumptions.
+
+Required Sections:
+1. Incident Summary
+2. Root Causes
+3. Severity Assessment
+4. Remediation Actions
+5. Infrastructure Impact
+""",
 
         agent=report_agent,
 
@@ -101,12 +162,11 @@ def run_incident_crew(logs):
             remediation_task,
             report_task
         ],
+        process=Process.sequential,
 
-        verbose=True
+        verbose=False
     )
 
     result = crew.kickoff()
 
-    print("\n FINAL CREW OUTPUT\n")
-
-    print(result)
+    return result

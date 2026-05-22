@@ -4,7 +4,7 @@ from configs.llm_config import llm
 
 remediation_agent = Agent(
 
-    role="Production Remediation Specialist",
+    role="production remediation specialist",
 
     goal="""
     Suggest operational fixes
@@ -20,6 +20,7 @@ remediation_agent = Agent(
     """,
 
     llm=llm,
+    allow_delegation=False,
 
-    verbose=True
+    verbose=False
 )

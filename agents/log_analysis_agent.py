@@ -19,6 +19,7 @@ log_analysis_agent = Agent(
     """,
 
     llm=llm,
+    allow_delegation=False,
 
-    verbose=True
+    verbose=False
 )

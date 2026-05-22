@@ -4,7 +4,7 @@ from configs.llm_config import llm
 
 root_cause_agent = Agent(
 
-    role="Root Cause Investigator",
+    role="root cause investigator",
 
     goal="""
     Determine the root cause
@@ -19,6 +19,7 @@ root_cause_agent = Agent(
     """,
 
     llm=llm,
+    allow_delegation=False,
 
-    verbose=True
+    verbose=False
 )
