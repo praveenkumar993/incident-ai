@@ -1,11 +1,34 @@
 from fastapi import FastAPI
 
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
+from crew.incident_crew import (
+    run_incident_crew
+)
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+
+    allow_origins=["*"],
+
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"],
+)
+class IncidentRequest(BaseModel):
+
+    incident_logs: list
+
 
 @app.get("/logs")
 def get_logs():
 
-    logs = [
+    return [
         {
             "service": "payment-service",
             "severity": "high",
@@ -23,4 +46,36 @@ def get_logs():
         }
     ]
 
-    return {"incident_logs": logs}
+
+@app.post("/analyze")
+def analyze_incident(request: IncidentRequest):
+
+    result = run_incident_crew(
+        request.incident_logs
+    )
+
+    final_report = str(result)
+
+    final_report = final_report.replace(
+        "[Date]",
+        ""
+    )
+
+    final_report = final_report.replace(
+        "[Time]",
+        ""
+    )
+
+    final_report = final_report.replace(
+        "[Environment]",
+        ""
+    )
+
+    final_report = final_report.replace(
+        "On ,",
+        ""
+    )
+
+    return {
+        "report": final_report
+    }

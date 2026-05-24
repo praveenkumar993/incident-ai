@@ -1,5 +1,11 @@
 from tools.log_tool import fetch_logs
+from dotenv import load_dotenv
 
+load_dotenv()
+
+import os
+
+print(os.getenv("LANGCHAIN_API_KEY"))
 from crew.incident_crew import (
     run_incident_crew
 )
