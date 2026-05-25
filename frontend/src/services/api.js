@@ -4,15 +4,35 @@ const API = axios.create({
 
   baseURL:
     import.meta.env.VITE_API_URL ||
+
     "http://localhost:8000"
 })
 
-export const analyzeIncident = async (logs) => {
+export const analyzeIncident = async (
+
+  file
+
+) => {
+
+  const formData = new FormData()
+
+  formData.append(
+    "file",
+    file
+  )
 
   const response = await API.post(
+
     "/analyze",
+
+    formData,
+
     {
-      incident_logs: logs
+      headers: {
+
+        "Content-Type":
+          "multipart/form-data"
+      }
     }
   )
 

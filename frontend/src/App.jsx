@@ -1,9 +1,10 @@
 import { useState } from "react"
 
 import { motion } from "framer-motion"
-import { useDropzone } from "react-dropzone"
-import LoadingScanner from "./components/LoadingScanner"
 
+import { useDropzone } from "react-dropzone"
+
+import LoadingScanner from "./components/LoadingScanner"
 
 import {
   ShieldAlert,
@@ -25,16 +26,24 @@ import toast, { Toaster } from "react-hot-toast"
 
 import { analyzeIncident } from "./services/api"
 
-// BUG FIX 1: case-insensitive severity matching + flexible field names
+
 const getSeverity = (log) => {
+
   const raw = (
+
     log.severity ||
+
     log.level ||
+
     log.priority ||
+
     ""
+
   ).toString().toLowerCase().trim()
+
   return raw
 }
+
 
 const calculateSeverityData = (logs) => {
 
@@ -43,113 +52,336 @@ const calculateSeverityData = (logs) => {
   let medium = 0
 
   logs.forEach((log) => {
-    // BUG FIX 1: use getSeverity() for case-insensitive comparison
+
     const sev = getSeverity(log)
 
-    if (sev === "critical" || sev === "crit" || sev === "fatal") {
+    if (
+      sev === "critical" ||
+      sev === "crit" ||
+      sev === "fatal"
+    ) {
+
       critical++
     }
-    else if (sev === "high" || sev === "error" || sev === "err") {
+
+    else if (
+      sev === "high" ||
+      sev === "error" ||
+      sev === "err"
+    ) {
+
       high++
     }
-    else if (sev === "medium" || sev === "warning" || sev === "warn" || sev === "moderate") {
+
+    else if (
+      sev === "medium" ||
+      sev === "warning" ||
+      sev === "warn" ||
+      sev === "moderate"
+    ) {
+
       medium++
     }
   })
 
   return [
-    { name: "Critical", value: critical },
-    { name: "High", value: high },
-    { name: "Medium", value: medium }
+
+    {
+      name: "Critical",
+      value: critical
+    },
+
+    {
+      name: "High",
+      value: high
+    },
+
+    {
+      name: "Medium",
+      value: medium
+    }
   ]
 }
 
-const COLORS = ["#ef4444", "#f97316", "#eab308"]
+
+const COLORS = [
+
+  "#ef4444",
+
+  "#f97316",
+
+  "#eab308"
+]
+
 
 function App() {
 
-  const [logs, setLogs] = useState("")
-  const [report, setReport] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [logs, setLogs] =
+    useState("")
+
+  const [uploadedFile, setUploadedFile] =
+    useState(null)
+
+  const [report, setReport] =
+    useState("")
+
+  const [loading, setLoading] =
+    useState(false)
+
+
   const onDrop = (acceptedFiles) => {
 
-  const file = acceptedFiles[0]
+    const file = acceptedFiles[0]
 
-  const reader = new FileReader()
+    if (!file) return
 
-  reader.onload = () => {
+    setUploadedFile(file)
 
-    try {
+    const reader = new FileReader()
 
-      const parsed = JSON.parse(reader.result)
+    reader.onload = () => {
 
-      setLogs(JSON.stringify(parsed, null, 2))
+      const content = reader.result
 
-      toast.success("Incident file uploaded!")
+      setLogs(content)
 
-    } catch {
-
-      toast.error("Invalid JSON file")
+      toast.success(
+        `${file.name} uploaded successfully!`
+      )
     }
+
+    reader.readAsText(file)
   }
 
-  reader.readAsText(file)
-}
 
-const { getRootProps, getInputProps } = useDropzone({
-  onDrop,
-  accept: {
-    "application/json": [".json"]
-  }
-})
-  
+  const {
+    getRootProps,
+    getInputProps
+  } = useDropzone({
+
+    onDrop,
+
+    accept: {
+
+      "application/json": [".json"],
+
+      "text/csv": [".csv"],
+
+      "text/plain": [
+        ".log",
+        ".txt"
+      ]
+    }
+  })
+
 
   const handleAnalyze = async () => {
 
-    try {
+  try {
 
-      setLoading(true)
+    setLoading(true)
 
-      toast.loading("AI agents analyzing incidents...", {
+    toast.loading(
+
+      "AI agents analyzing incidents...",
+
+      {
         id: "analysis"
-      })
+      }
+    )
 
-      const parsedLogs = JSON.parse(logs)
+    let fileToAnalyze = uploadedFile
 
-      const response = await analyzeIncident(
-        parsedLogs.incident_logs
+    if (
+
+      !fileToAnalyze &&
+
+      logs.trim()
+    ) {
+
+      const trimmed =
+        logs.trim()
+
+      let filename =
+        "manual_input.txt"
+
+      let mimeType =
+        "text/plain"
+
+      if (
+
+        trimmed.startsWith("{") ||
+
+        trimmed.startsWith("[")
+      ) {
+
+        filename =
+          "manual_input.json"
+
+        mimeType =
+          "application/json"
+      }
+
+      else if (
+
+        trimmed.includes(",") &&
+
+        trimmed.includes("service")
+      ) {
+
+        filename =
+          "manual_input.csv"
+
+        mimeType =
+          "text/csv"
+      }
+
+      else {
+
+        filename =
+          "manual_input.log"
+
+        mimeType =
+          "text/plain"
+      }
+
+      fileToAnalyze = new File(
+
+        [logs],
+
+        filename,
+
+        {
+          type: mimeType
+        }
+      )
+    }
+
+    if (!fileToAnalyze) {
+
+      toast.error(
+
+        "Upload or paste incident logs first"
       )
 
-      setReport(response.report)
+      setLoading(false)
 
-      toast.success("Incident analysis completed!", {
-        id: "analysis"
-      })
-
-    } catch (error) {
-
-      console.error(error)
-
-      toast.error("Invalid JSON or backend error")
+      return
     }
+
+    const response =
+
+      await analyzeIncident(
+
+        fileToAnalyze
+      )
+
+    setReport(
+      response.report
+    )
+
+    toast.success(
+
+      "Incident analysis completed!",
+
+      {
+        id: "analysis"
+      }
+    )
+
+  } catch (error) {
+
+    console.error(error)
+
+    toast.error(
+      "Incident analysis failed"
+    )
+
+  } finally {
 
     setLoading(false)
   }
-
-  // BUG FIX 2: support multiple JSON shapes (incident_logs, logs, incidents, or bare array)
+}
   let parsedData = []
 
   try {
 
     if (logs.trim()) {
 
-      const parsed = JSON.parse(logs)
+      if (
 
-      parsedData =
-        parsed.incident_logs ||
-        parsed.logs ||
-        parsed.incidents ||
-        (Array.isArray(parsed) ? parsed : [])
+        logs.trim().startsWith("{") ||
+
+        logs.trim().startsWith("[")
+
+      ) {
+
+        const parsed = JSON.parse(logs)
+
+        parsedData =
+
+          parsed.incident_logs ||
+
+          parsed.logs ||
+
+          parsed.incidents ||
+
+          (
+
+            Array.isArray(parsed)
+
+            ? parsed
+
+            : []
+          )
+
+      } else {
+
+        const lines =
+          logs.split("\n")
+
+        parsedData = lines
+
+          .filter(
+            line => line.trim()
+          )
+
+          .map((line) => {
+
+            const lower =
+              line.toLowerCase()
+
+            let severity =
+              "medium"
+
+            if (
+              lower.includes("critical")
+            ) {
+
+              severity = "critical"
+            }
+
+            else if (
+              lower.includes("error")
+            ) {
+
+              severity = "high"
+            }
+
+            return {
+
+              service:
+
+                line.split(" ")[2] ||
+
+                "unknown-service",
+
+              severity,
+
+              message: line
+            }
+          })
+      }
     }
 
   } catch {
@@ -157,46 +389,73 @@ const { getRootProps, getInputProps } = useDropzone({
     parsedData = []
   }
 
+
   const severityData =
     calculateSeverityData(parsedData)
 
+
   const criticalCount =
+
     severityData.find(
+
       item => item.name === "Critical"
+
     )?.value || 0
+
 
   const highCount =
+
     severityData.find(
+
       item => item.name === "High"
+
     )?.value || 0
+
 
   const mediumCount =
+
     severityData.find(
+
       item => item.name === "Medium"
+
     )?.value || 0
 
+
   const totalIncidents =
+
     criticalCount +
+
     highCount +
+
     mediumCount
 
-  // BUG FIX 3: AI Agents card was showing totalIncidents (same as Critical Alerts).
-  // It should show the number of agents spawned, not the total incident count.
-  const activeAgents = parsedData.length
+
+  const activeAgents =
+    parsedData.length
+
 
   const systemHealth = Math.max(
+
     100 - (
+
       criticalCount * 15 +
+
       highCount * 10 +
+
       mediumCount * 5
     ),
+
     0
   )
 
+
   const chartData =
+
     severityData.filter(
+
       item => item.value > 0
     )
+
 
   return (
 
@@ -207,177 +466,327 @@ const { getRootProps, getInputProps } = useDropzone({
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#1e293b,transparent_40%)] opacity-30" />
 
       <motion.div
-        initial={{ opacity: 0, y: -40 }}
-        animate={{ opacity: 1, y: 0 }}
+
+        initial={{
+          opacity: 0,
+          y: -40
+        }}
+
+        animate={{
+          opacity: 1,
+          y: 0
+        }}
+
         className="relative z-10 p-10"
       >
 
         <h1 className="text-6xl font-extrabold text-center bg-gradient-to-r from-red-500 via-orange-400 to-yellow-300 bg-clip-text text-transparent">
+
           Incident AI Ops Center
+
         </h1>
 
         <p className="text-center text-slate-400 mt-4 text-lg">
+
           Autonomous Multi-Agent Incident Intelligence Platform
+
         </p>
 
       </motion.div>
 
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-10 relative z-10">
 
         <motion.div
-          whileHover={{ scale: 1.03 }}
+
+          whileHover={{
+            scale: 1.03
+          }}
+
           className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-6 shadow-2xl"
         >
+
           <div className="flex items-center gap-3">
-            <ShieldAlert className="text-red-400" size={32} />
+
+            <ShieldAlert
+              className="text-red-400"
+              size={32}
+            />
+
             <h2 className="text-2xl font-bold">
+
               Critical Alerts
+
             </h2>
+
           </div>
 
           <p className="text-5xl mt-6 font-extrabold text-red-400">
+
             {totalIncidents}
+
           </p>
 
           <p className="text-slate-400 mt-2">
+
             Active incidents detected
+
           </p>
+
         </motion.div>
 
+
         <motion.div
-          whileHover={{ scale: 1.03 }}
+
+          whileHover={{
+            scale: 1.03
+          }}
+
           className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-6 shadow-2xl"
         >
+
           <div className="flex items-center gap-3">
-            <Activity className="text-green-400" size={32} />
+
+            <Activity
+              className="text-green-400"
+              size={32}
+            />
+
             <h2 className="text-2xl font-bold">
+
               AI Agents
+
             </h2>
+
           </div>
 
-          {/* BUG FIX 3: show activeAgents instead of duplicate totalIncidents */}
           <p className="text-5xl mt-6 font-extrabold text-green-400">
+
             {activeAgents}
+
           </p>
 
           <p className="text-slate-400 mt-2">
+
             Autonomous agents running
+
           </p>
+
         </motion.div>
 
+
         <motion.div
-          whileHover={{ scale: 1.03 }}
+
+          whileHover={{
+            scale: 1.03
+          }}
+
           className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-6 shadow-2xl"
         >
+
           <div className="flex items-center gap-3">
-            <Cpu className="text-yellow-300" size={32} />
+
+            <Cpu
+              className="text-yellow-300"
+              size={32}
+            />
+
             <h2 className="text-2xl font-bold">
+
               System Health
+
             </h2>
+
           </div>
 
           <p className="text-5xl mt-6 font-extrabold text-yellow-300">
+
             {systemHealth}%
+
           </p>
 
           <p className="text-slate-400 mt-2">
+
             Infrastructure operational
+
           </p>
+
         </motion.div>
 
       </div>
 
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 px-10 mt-10 relative z-10">
 
         <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0 }}
+
+          initial={{
+            opacity: 0,
+            x: -40
+          }}
+
+          animate={{
+            opacity: 1,
+            x: 0
+          }}
+
           className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-8 shadow-2xl"
         >
 
           <div className="flex items-center gap-3 mb-6">
-            <UploadCloud className="text-cyan-400" size={30} />
+
+            <UploadCloud
+              className="text-cyan-400"
+              size={30}
+            />
+
             <h2 className="text-3xl font-bold">
+
               Incident Upload
+
             </h2>
+
           </div>
 
           <div
-  {...getRootProps()}
-  className="border-2 border-dashed border-cyan-500 rounded-2xl p-10 text-center cursor-pointer hover:bg-cyan-500/10 transition-all duration-300"
->
 
-  <input {...getInputProps()} />
+            {...getRootProps()}
 
-  <UploadCloud
-    size={50}
-    className="mx-auto text-cyan-400"
-  />
+            className="border-2 border-dashed border-cyan-500 rounded-2xl p-10 text-center cursor-pointer hover:bg-cyan-500/10 transition-all duration-300"
+          >
 
-  <p className="mt-5 text-slate-300">
-    Drag & Drop logs.json here
-  </p>
+            <input {...getInputProps()} />
 
-  <p className="text-sm text-slate-500 mt-2">
-    or click to upload
-  </p>
+            <UploadCloud
 
-</div>
+              size={50}
 
-<textarea
-  value={logs}
-  onChange={(e) => setLogs(e.target.value)}
-  className="w-full h-72 mt-6 bg-slate-900/70 border border-slate-700 rounded-2xl p-5 outline-none text-sm"
-  placeholder="Paste incident logs JSON here..."
-/>
+              className="mx-auto text-cyan-400"
+            />
+
+            <p className="mt-5 text-slate-300">
+
+              Upload JSON, CSV, LOG or TXT incident files
+
+            </p>
+
+            <p className="text-sm text-slate-500 mt-2">
+
+              or click to upload
+
+            </p>
+
+          </div>
+
+
+          <textarea
+
+            value={logs}
+
+            onChange={(e) =>
+              setLogs(e.target.value)
+            }
+
+            className="w-full h-72 mt-6 bg-slate-900/70 border border-slate-700 rounded-2xl p-5 outline-none text-sm"
+
+            placeholder="Preview uploaded incident logs..."
+          />
+
 
           <button
+
             onClick={handleAnalyze}
+
             className="mt-6 w-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-all duration-300"
           >
+
             {
+
               loading
+
               ? "AI Agents Investigating..."
+
               : "Analyze Incident"
             }
+
           </button>
 
         </motion.div>
 
+
         <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
+
+          initial={{
+            opacity: 0,
+            x: 40
+          }}
+
+          animate={{
+            opacity: 1,
+            x: 0
+          }}
+
           className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-8 shadow-2xl"
         >
 
           <div className="flex items-center gap-3 mb-6">
-            <ServerCrash className="text-pink-400" size={30} />
+
+            <ServerCrash
+              className="text-pink-400"
+              size={30}
+            />
+
             <h2 className="text-3xl font-bold">
+
               Incident Severity
+
             </h2>
+
           </div>
 
           <div className="h-80">
 
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
+
               <PieChart>
 
                 <Pie
+
                   data={chartData}
+
                   dataKey="value"
+
                   outerRadius={120}
+
                   innerRadius={60}
+
                   paddingAngle={5}
+
                   label
                 >
 
                   {
-                    chartData.map((entry, index) => (
-                      <Cell
-                        key={index}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))
+
+                    chartData.map(
+
+                      (entry, index) => (
+
+                        <Cell
+
+                          key={index}
+
+                          fill={
+                            COLORS[
+                              index %
+                              COLORS.length
+                            ]
+                          }
+                        />
+                      )
+                    )
                   }
 
                 </Pie>
@@ -385,6 +794,7 @@ const { getRootProps, getInputProps } = useDropzone({
                 <Tooltip />
 
               </PieChart>
+
             </ResponsiveContainer>
 
           </div>
@@ -392,27 +802,46 @@ const { getRootProps, getInputProps } = useDropzone({
         </motion.div>
 
       </div>
+
+
       {
+
         loading && (
+
           <LoadingScanner />
         )
       }
 
+
       {
+
         report && (
 
           <motion.div
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
+
+            initial={{
+              opacity: 0,
+              y: 60
+            }}
+
+            animate={{
+              opacity: 1,
+              y: 0
+            }}
+
             className="mx-10 mt-10 mb-20 bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10"
           >
 
             <h2 className="text-4xl font-bold mb-8 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+
               AI Incident Intelligence Report
+
             </h2>
 
             <pre className="whitespace-pre-wrap text-sm leading-8 text-slate-200">
+
               {report}
+
             </pre>
 
           </motion.div>

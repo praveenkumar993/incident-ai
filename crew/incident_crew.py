@@ -111,26 +111,15 @@ For each incident provide:
     report_task = Task(
 
         description="""
-Generate FINAL incident report using ONLY provided task outputs.
-
-DO NOT write introductory template sentences.
-
-DO NOT use placeholders like:
-- [Date]
-- [Time]
-- [Environment]
-
-If information is unavailable,
-simply omit it.
+Generate FINAL incident report.
 
 STRICT RULES:
 - ONLY use outputs from previous agents
 - DO NOT invent incidents
 - DO NOT create fake services
 - Keep report concise and structured
-
-ONLY summarize findings from previous tasks.
-DO NOT create additional assumptions.
+- NEVER use placeholders like [Date], [Time], [Service]
+- If no timestamp exists in logs, omit dates completely
 
 Required Sections:
 1. Incident Summary

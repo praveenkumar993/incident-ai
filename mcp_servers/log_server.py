@@ -1,4 +1,7 @@
-from fastapi import FastAPI
+from fastapi import (
+    FastAPI,
+    UploadFile
+)
 
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,7 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from crew.incident_crew import (
     run_incident_crew
 )
-
+from parsers.normalizer import (
+    normalize_logs
+)
 app = FastAPI()
 
 app.add_middleware(
@@ -48,34 +53,31 @@ def get_logs():
 
 
 @app.post("/analyze")
-def analyze_incident(request: IncidentRequest):
+
+async def analyze_logs(file: UploadFile):
+
+    content = await file.read()
+
+    decoded_content = content.decode(
+        "utf-8"
+    )
+
+    normalized_logs = normalize_logs(
+
+        file.filename,
+
+        decoded_content
+    )
 
     result = run_incident_crew(
-        request.incident_logs
-    )
-
-    final_report = str(result)
-
-    final_report = final_report.replace(
-        "[Date]",
-        ""
-    )
-
-    final_report = final_report.replace(
-        "[Time]",
-        ""
-    )
-
-    final_report = final_report.replace(
-        "[Environment]",
-        ""
-    )
-
-    final_report = final_report.replace(
-        "On ,",
-        ""
+        normalized_logs
     )
 
     return {
-        "report": final_report
+
+        "normalized_logs":
+            normalized_logs,
+
+        "report":
+            str(result)
     }
