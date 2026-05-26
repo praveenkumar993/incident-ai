@@ -8,28 +8,37 @@ from langchain_core.documents import (
     Document
 )
 
-import os
-
 
 DB_DIR = "vector_db"
 
-
-embedding_model = HuggingFaceEmbeddings(
-
-    model_name=
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
+vectorstore = None
 
 
-vectorstore = Chroma(
+def get_vectorstore():
 
-    persist_directory=DB_DIR,
+    global vectorstore
 
-    embedding_function=embedding_model
-)
+    if vectorstore is None:
+
+        embedding_model = HuggingFaceEmbeddings(
+
+            model_name=
+            "sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+        vectorstore = Chroma(
+
+            persist_directory=DB_DIR,
+
+            embedding_function=embedding_model
+        )
+
+    return vectorstore
 
 
 def store_incident_logs(logs):
+
+    vector_db = get_vectorstore()
 
     documents = []
 
@@ -66,16 +75,16 @@ def store_incident_logs(logs):
 
     if documents:
 
-        vectorstore.add_documents(
+        vector_db.add_documents(
             documents
         )
-
-        vectorstore.persist()
 
 
 def search_similar_incidents(query):
 
-    results = vectorstore.similarity_search(
+    vector_db = get_vectorstore()
+
+    results = vector_db.similarity_search(
 
         query,
 
