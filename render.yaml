@@ -1,21 +1,24 @@
 services:
   - type: web
+
     name: incident-ai-backend
+
     env: python
 
     buildCommand: pip install -r requirements.txt
 
-    startCommand: uvicorn mcp_servers.log_server:app --host 0.0.0.0 --port 10000
+    startCommand: uvicorn mcp_servers.log_server:app --host 0.0.0.0 --port $PORT
 
     envVars:
+
       - key: GROQ_API_KEY
         sync: false
 
-      - key: LANGSMITH_API_KEY
+      - key: LANGCHAIN_API_KEY
         sync: false
 
       - key: LANGCHAIN_TRACING_V2
-        value: true
+        value: "true"
 
-      - key: LANGSMITH_PROJECT
+      - key: LANGCHAIN_PROJECT
         value: incident-ai

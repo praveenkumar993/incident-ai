@@ -1,69 +1,106 @@
 # 🚨 Incident AI Ops Center
 
-An end-to-end multi-agent AI incident intelligence platform built using CrewAI, FastAPI, React, Groq LLM, and LangSmith observability.
+An enterprise-grade multi-agent AI incident intelligence platform built using CrewAI, FastAPI, React, Groq LLM, LangSmith observability, and Vector Memory Search.
 
 ---
 
 # 🔥 Overview
 
-Incident AI Ops Center is an autonomous AI-powered incident analysis platform designed for modern production systems.
+Incident AI Ops Center is an autonomous AI-powered incident analysis and operational intelligence platform designed for modern production environments.
 
-The platform analyzes infrastructure incidents, identifies root causes, suggests remediation actions, and generates structured incident intelligence reports using a multi-agent orchestration workflow.
+The platform ingests infrastructure incidents from multiple formats, performs AI-driven root cause analysis using multi-agent orchestration, generates remediation strategies, and retrieves semantically similar historical incidents using vector memory.
 
-The system also includes:
-- real-time AI observability
-- dynamic incident analytics
-- interactive dashboard visualizations
-- production-style AI workflows
+The system combines:
+- AI agents
+- observability workflows
+- semantic incident memory
+- vector similarity search
+- production-style incident intelligence
+- real-time interactive dashboards
 
 ---
 
-# 🚀 Features
+# 🚀 Core Features
 
 ## 🤖 Multi-Agent AI Workflow
+
+The platform uses a CrewAI-powered autonomous agent system:
+
 - Log Analysis Agent
 - Root Cause Investigation Agent
 - Remediation Planning Agent
 - Final Report Generation Agent
 
-## 📊 Interactive Dashboard
-- Dynamic severity metrics
-- Incident visualization charts
-- Glassmorphism UI
-- AI loading scanner animations
-- Drag & drop JSON upload
+---
 
-## 🧠 AI Infrastructure
-- CrewAI orchestration
-- Groq LLM integration
-- LangSmith tracing & observability
-- FastAPI backend APIs
+# 🧠 AI Operational Intelligence
 
-## 📈 Real-Time Incident Intelligence
-- Root cause analysis
-- Infrastructure impact analysis
-- Severity assessment
-- Remediation recommendations
+## ✅ Vector Database Memory
+- Persistent historical incident storage
+- Semantic incident embeddings
+- Historical outage retrieval
+- Similarity-based operational intelligence
+
+## ✅ Semantic Similarity Search
+
+The platform retrieves historically related incidents using vector similarity search powered by embeddings and ChromaDB.
 
 ---
 
-# 🏗️ Architecture
+# 🏗️ System Architecture
+
+## High-Level Architecture
 
 ```text
-React Frontend
-        ↓
-FastAPI Backend
-        ↓
-CrewAI Multi-Agent System
-        ↓
-Groq LLM
-        ↓
-LangSmith Observability
+                         ┌──────────────────────┐
+                         │  User Uploads Logs   │
+                         │ JSON / CSV / LOG/TXT │
+                         └──────────┬───────────┘
+                                    │
+                                    ▼
+                    ┌────────────────────────────┐
+                    │   Frontend React Dashboard │
+                    │  Tailwind + Framer Motion  │
+                    └──────────┬─────────────────┘
+                               │ API Calls
+                               ▼
+                   ┌─────────────────────────────┐
+                   │     FastAPI Backend         │
+                   │ Incident Processing Engine  │
+                   └──────────┬──────────────────┘
+                              │
+          ┌───────────────────┼────────────────────┐
+          │                   │                    │
+          ▼                   ▼                    ▼
+
+┌────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│ Normalization  │  │ Vector Memory DB │  │ CrewAI Agents    │
+│ Layer          │  │ ChromaDB         │  │ Multi-Agent Flow │
+└────────────────┘  └──────────────────┘  └──────────────────┘
+                              │                    │
+                              ▼                    ▼
+
+                  ┌────────────────────┐  ┌──────────────────┐
+                  │ Similarity Search  │  │ Groq LLM         │
+                  │ Historical Memory  │  │ AI Reasoning     │
+                  └────────────────────┘  └──────────────────┘
+                               │
+                               ▼
+                   ┌────────────────────────────┐
+                   │ AI Incident Intelligence   │
+                   │ Report Generation          │
+                   └──────────┬─────────────────┘
+                              │
+                              ▼
+                   ┌────────────────────────────┐
+                   │ LangSmith Observability    │
+                   │ Agent Tracing & Monitoring │
+                   └────────────────────────────┘
 ```
 
 ---
 
-# 🛠️ Tech Stack
+# ⚡ Tech Stack
 
 ## Frontend
 - React
@@ -72,13 +109,17 @@ LangSmith Observability
 - Framer Motion
 - Recharts
 - React Hot Toast
+- Lucide Icons
+- React Dropzone
 
 ## Backend
 - FastAPI
 - CrewAI
 - LangChain
-- Groq
+- Groq LLM
 - LangSmith
+- ChromaDB
+- Sentence Transformers
 - Python
 
 ---
@@ -92,64 +133,58 @@ incident-ai/
 ├── configs/
 ├── crew/
 ├── frontend/
+├── memory/
+├── parsers/
 ├── mcp_servers/
+├── vector_db/
 ├── tools/
 │
-├── main.py
 ├── requirements.txt
-├── render.yaml
 ├── Dockerfile
 ├── docker-compose.yml
-└── README.md
+├── render.yaml
+├── vercel.json
+├── README.md
+└── .env
 ```
 
 ---
 
-# ⚡ Installation
+# 🚀 Installation
 
-## 1️⃣ Clone Repository
+## Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/incident-ai-platform.git
+git clone https://github.com/yourusername/incident-ai.git
 
-cd incident-ai-platform
+cd incident-ai
 ```
 
----
-
-## 2️⃣ Create Virtual Environment
+## Create Virtual Environment
 
 ```bash
 python -m venv venv
 ```
 
-Activate:
-
-### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-### Linux / Mac
-
-```bash
-source venv/bin/activate
-```
-
----
-
-## 3️⃣ Install Backend Dependencies
+## Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
+## Install Frontend Packages
+
+```bash
+cd frontend
+
+npm install
+```
+
 ---
 
-## 4️⃣ Setup Environment Variables
+# 🔐 Environment Variables
 
-Create `.env`
+Create a `.env` file:
 
 ```env
 GROQ_API_KEY=your_groq_api_key
@@ -163,70 +198,25 @@ LANGCHAIN_PROJECT=incident-ai
 
 ---
 
-# 🚀 Run Backend
+# 🚀 Running Backend
 
 ```bash
 uvicorn mcp_servers.log_server:app --reload
 ```
 
-Backend:
-```text
-http://localhost:8000
-```
-
 ---
 
-# 🚀 Run Frontend
+# 🚀 Running Frontend
 
 ```bash
 cd frontend
 
-npm install
-
 npm run dev
 ```
-
-Frontend:
-```text
-http://localhost:5173
-```
-
----
-
-# 📊 Sample Incident Logs
-
-```json
-{
-  "incident_logs": [
-    {
-      "service": "payment-service",
-      "severity": "critical",
-      "message": "Primary PostgreSQL database unreachable"
-    },
-    {
-      "service": "gateway-service",
-      "severity": "high",
-      "message": "CPU usage exceeded 95%"
-    }
-  ]
-}
-```
-
----
-
-# 🔍 LangSmith Observability
-
-The platform integrates with LangSmith for:
-- agent execution tracing
-- orchestration visibility
-- token usage monitoring
-- AI workflow debugging
 
 ---
 
 # 🐳 Docker Support
-
-Run locally with Docker:
 
 ```bash
 docker compose up --build
@@ -237,25 +227,11 @@ docker compose up --build
 # ☁️ Deployment
 
 ## Frontend
-Deploy using:
 - Vercel
 
 ## Backend
-Deploy using:
 - Render
 - Railway
-
----
-
-# 🚀 Future Improvements
-
-- Prometheus integration
-- Grafana monitoring
-- Kubernetes metrics ingestion
-- Real-time streaming incidents
-- Authentication system
-- Multi-tenant dashboards
-- Vector database memory
 
 ---
 
@@ -265,6 +241,6 @@ Praveen Kumar
 
 ---
 
-# ⭐ If You Like This Project
+# ⭐ Support
 
-Give it a star on GitHub 🚀
+If you like this project, give it a star on GitHub 🚀
