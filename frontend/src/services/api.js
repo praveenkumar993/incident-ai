@@ -1,18 +1,7 @@
-import axios from "axios"
+const API_URL = import.meta.env.VITE_API_URL
 
-const API = axios.create({
 
-  baseURL:
-    import.meta.env.VITE_API_URL ||
-
-    "http://localhost:8000"
-})
-
-export const analyzeIncident = async (
-
-  file
-
-) => {
+export async function analyzeIncident(file) {
 
   const formData = new FormData()
 
@@ -21,20 +10,23 @@ export const analyzeIncident = async (
     file
   )
 
-  const response = await API.post(
+  const response = await fetch(
 
-    "/analyze",
-
-    formData,
+    `${API_URL}/analyze`,
 
     {
-      headers: {
+      method: "POST",
 
-        "Content-Type":
-          "multipart/form-data"
-      }
+      body: formData
     }
   )
 
-  return response.data
+  if (!response.ok) {
+
+    throw new Error(
+      "Failed to analyze incident"
+    )
+  }
+
+  return response.json()
 }
