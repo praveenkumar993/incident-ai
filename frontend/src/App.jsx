@@ -11,7 +11,8 @@ import {
   Activity,
   ServerCrash,
   Cpu,
-  UploadCloud
+  UploadCloud,
+  AlertTriangle
 } from "lucide-react"
 
 import {
@@ -22,9 +23,23 @@ import {
   ResponsiveContainer
 } from "recharts"
 
-import toast, { Toaster } from "react-hot-toast"
+import toast, {
+  Toaster
+} from "react-hot-toast"
 
-import { analyzeIncident } from "./services/api"
+import {
+  analyzeIncident
+} from "./services/api"
+
+
+const COLORS = [
+
+  "#ef4444",
+
+  "#f97316",
+
+  "#eab308"
+]
 
 
 const getSeverity = (log) => {
@@ -39,7 +54,7 @@ const getSeverity = (log) => {
 
     ""
 
-  ).toString().toLowerCase().trim()
+  ).toString().toLowerCase()
 
   return raw
 }
@@ -53,32 +68,27 @@ const calculateSeverityData = (logs) => {
 
   logs.forEach((log) => {
 
-    const sev = getSeverity(log)
+    const sev =
+      getSeverity(log)
 
     if (
-      sev === "critical" ||
-      sev === "crit" ||
-      sev === "fatal"
+      sev.includes("critical")
     ) {
 
       critical++
     }
 
     else if (
-      sev === "high" ||
-      sev === "error" ||
-      sev === "err"
+
+      sev.includes("high") ||
+
+      sev.includes("error")
     ) {
 
       high++
     }
 
-    else if (
-      sev === "medium" ||
-      sev === "warning" ||
-      sev === "warn" ||
-      sev === "moderate"
-    ) {
+    else {
 
       medium++
     }
@@ -104,16 +114,6 @@ const calculateSeverityData = (logs) => {
 }
 
 
-const COLORS = [
-
-  "#ef4444",
-
-  "#f97316",
-
-  "#eab308"
-]
-
-
 function App() {
 
   const [logs, setLogs] =
@@ -128,6 +128,14 @@ function App() {
   const [loading, setLoading] =
     useState(false)
 
+  const [
+
+    similarIncidents,
+
+    setSimilarIncidents
+
+  ] = useState([])
+
 
   const onDrop = (acceptedFiles) => {
 
@@ -137,16 +145,19 @@ function App() {
 
     setUploadedFile(file)
 
-    const reader = new FileReader()
+    const reader =
+      new FileReader()
 
     reader.onload = () => {
 
-      const content = reader.result
+      const content =
+        reader.result
 
       setLogs(content)
 
       toast.success(
-        `${file.name} uploaded successfully!`
+
+        `${file.name} uploaded successfully`
       )
     }
 
@@ -155,8 +166,11 @@ function App() {
 
 
   const {
+
     getRootProps,
+
     getInputProps
+
   } = useDropzone({
 
     onDrop,
@@ -168,7 +182,9 @@ function App() {
       "text/csv": [".csv"],
 
       "text/plain": [
+
         ".log",
+
         ".txt"
       ]
     }
@@ -177,131 +193,128 @@ function App() {
 
   const handleAnalyze = async () => {
 
-  try {
+    try {
 
-    setLoading(true)
+      setLoading(true)
 
-    toast.loading(
+      toast.loading(
 
-      "AI agents analyzing incidents...",
+        "AI agents analyzing incidents...",
 
-      {
-        id: "analysis"
-      }
-    )
+        {
+          id: "analysis"
+        }
+      )
 
-    let fileToAnalyze = uploadedFile
-
-    if (
-
-      !fileToAnalyze &&
-
-      logs.trim()
-    ) {
-
-      const trimmed =
-        logs.trim()
-
-      let filename =
-        "manual_input.txt"
-
-      let mimeType =
-        "text/plain"
+      let fileToAnalyze =
+        uploadedFile
 
       if (
 
-        trimmed.startsWith("{") ||
+        !fileToAnalyze &&
 
-        trimmed.startsWith("[")
+        logs.trim()
       ) {
 
-        filename =
-          "manual_input.json"
+        const trimmed =
+          logs.trim()
 
-        mimeType =
-          "application/json"
-      }
-
-      else if (
-
-        trimmed.includes(",") &&
-
-        trimmed.includes("service")
-      ) {
-
-        filename =
-          "manual_input.csv"
-
-        mimeType =
-          "text/csv"
-      }
-
-      else {
-
-        filename =
+        let filename =
           "manual_input.log"
 
-        mimeType =
+        let mimeType =
           "text/plain"
+
+        if (
+
+          trimmed.startsWith("{") ||
+
+          trimmed.startsWith("[")
+        ) {
+
+          filename =
+            "manual_input.json"
+
+          mimeType =
+            "application/json"
+        }
+
+        else if (
+
+          trimmed.includes(",") &&
+
+          trimmed.includes("service")
+        ) {
+
+          filename =
+            "manual_input.csv"
+
+          mimeType =
+            "text/csv"
+        }
+
+        fileToAnalyze = new File(
+
+          [logs],
+
+          filename,
+
+          {
+            type: mimeType
+          }
+        )
       }
 
-      fileToAnalyze = new File(
+      if (!fileToAnalyze) {
 
-        [logs],
+        toast.error(
 
-        filename,
+          "Upload or paste logs first"
+        )
+
+        setLoading(false)
+
+        return
+      }
+
+      const response =
+        await analyzeIncident(
+          fileToAnalyze
+        )
+
+      setReport(
+        response.report || ""
+      )
+
+      setSimilarIncidents(
+
+        response.similar_incidents || []
+      )
+
+      toast.success(
+
+        "Incident analysis completed",
 
         {
-          type: mimeType
+          id: "analysis"
         }
       )
-    }
 
-    if (!fileToAnalyze) {
+    } catch (error) {
+
+      console.error(error)
 
       toast.error(
-
-        "Upload or paste incident logs first"
+        "Analysis failed"
       )
+
+    } finally {
 
       setLoading(false)
-
-      return
     }
-
-    const response =
-
-      await analyzeIncident(
-
-        fileToAnalyze
-      )
-
-    setReport(
-      response.report
-    )
-
-    toast.success(
-
-      "Incident analysis completed!",
-
-      {
-        id: "analysis"
-      }
-    )
-
-  } catch (error) {
-
-    console.error(error)
-
-    toast.error(
-      "Incident analysis failed"
-    )
-
-  } finally {
-
-    setLoading(false)
   }
-}
+
+
   let parsedData = []
 
   try {
@@ -313,10 +326,10 @@ function App() {
         logs.trim().startsWith("{") ||
 
         logs.trim().startsWith("[")
-
       ) {
 
-        const parsed = JSON.parse(logs)
+        const parsed =
+          JSON.parse(logs)
 
         parsedData =
 
@@ -358,14 +371,16 @@ function App() {
               lower.includes("critical")
             ) {
 
-              severity = "critical"
+              severity =
+                "critical"
             }
 
             else if (
               lower.includes("error")
             ) {
 
-              severity = "high"
+              severity =
+                "high"
             }
 
             return {
@@ -391,69 +406,35 @@ function App() {
 
 
   const severityData =
-    calculateSeverityData(parsedData)
-
-
-  const criticalCount =
-
-    severityData.find(
-
-      item => item.name === "Critical"
-
-    )?.value || 0
-
-
-  const highCount =
-
-    severityData.find(
-
-      item => item.name === "High"
-
-    )?.value || 0
-
-
-  const mediumCount =
-
-    severityData.find(
-
-      item => item.name === "Medium"
-
-    )?.value || 0
+    calculateSeverityData(
+      parsedData
+    )
 
 
   const totalIncidents =
 
-    criticalCount +
+    severityData.reduce(
 
-    highCount +
+      (acc, item) =>
 
-    mediumCount
+        acc + item.value,
+
+      0
+    )
 
 
   const activeAgents =
     parsedData.length
 
 
-  const systemHealth = Math.max(
+  const systemHealth =
+    Math.max(
 
-    100 - (
+      100 - (
+        totalIncidents * 10
+      ),
 
-      criticalCount * 15 +
-
-      highCount * 10 +
-
-      mediumCount * 5
-    ),
-
-    0
-  )
-
-
-  const chartData =
-
-    severityData.filter(
-
-      item => item.value > 0
+      0
     )
 
 
@@ -495,7 +476,7 @@ function App() {
       </motion.div>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-10 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-10">
 
         <motion.div
 
@@ -503,14 +484,13 @@ function App() {
             scale: 1.03
           }}
 
-          className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-6 shadow-2xl"
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-red-500/20 shadow-xl"
         >
 
           <div className="flex items-center gap-3">
 
             <ShieldAlert
               className="text-red-400"
-              size={32}
             />
 
             <h2 className="text-2xl font-bold">
@@ -527,10 +507,9 @@ function App() {
 
           </p>
 
-          <p className="text-slate-400 mt-2">
+          <p className="text-slate-400 mt-3">
 
-            Active incidents detected
-
+            Active production incidents
           </p>
 
         </motion.div>
@@ -542,14 +521,13 @@ function App() {
             scale: 1.03
           }}
 
-          className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-6 shadow-2xl"
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-green-500/20 shadow-xl"
         >
 
           <div className="flex items-center gap-3">
 
             <Activity
               className="text-green-400"
-              size={32}
             />
 
             <h2 className="text-2xl font-bold">
@@ -566,10 +544,9 @@ function App() {
 
           </p>
 
-          <p className="text-slate-400 mt-2">
+          <p className="text-slate-400 mt-3">
 
-            Autonomous agents running
-
+            Autonomous agents active
           </p>
 
         </motion.div>
@@ -581,14 +558,13 @@ function App() {
             scale: 1.03
           }}
 
-          className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-6 shadow-2xl"
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-yellow-500/20 shadow-xl"
         >
 
           <div className="flex items-center gap-3">
 
             <Cpu
-              className="text-yellow-300"
-              size={32}
+              className="text-yellow-400"
             />
 
             <h2 className="text-2xl font-bold">
@@ -599,16 +575,15 @@ function App() {
 
           </div>
 
-          <p className="text-5xl mt-6 font-extrabold text-yellow-300">
+          <p className="text-5xl mt-6 font-extrabold text-yellow-400">
 
             {systemHealth}%
 
           </p>
 
-          <p className="text-slate-400 mt-2">
+          <p className="text-slate-400 mt-3">
 
             Infrastructure operational
-
           </p>
 
         </motion.div>
@@ -616,13 +591,13 @@ function App() {
       </div>
 
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 px-10 mt-10 relative z-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 px-10 mt-10">
 
         <motion.div
 
           initial={{
             opacity: 0,
-            x: -40
+            x: -30
           }}
 
           animate={{
@@ -630,14 +605,13 @@ function App() {
             x: 0
           }}
 
-          className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-8 shadow-2xl"
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-xl"
         >
 
           <div className="flex items-center gap-3 mb-6">
 
             <UploadCloud
               className="text-cyan-400"
-              size={30}
             />
 
             <h2 className="text-3xl font-bold">
@@ -652,7 +626,7 @@ function App() {
 
             {...getRootProps()}
 
-            className="border-2 border-dashed border-cyan-500 rounded-2xl p-10 text-center cursor-pointer hover:bg-cyan-500/10 transition-all duration-300"
+            className="border-2 border-dashed border-cyan-500 hover:border-cyan-400 transition-all duration-300 rounded-2xl p-10 text-center cursor-pointer bg-black/20"
           >
 
             <input {...getInputProps()} />
@@ -664,16 +638,14 @@ function App() {
               className="mx-auto text-cyan-400"
             />
 
-            <p className="mt-5 text-slate-300">
+            <p className="mt-5 text-slate-300 font-medium">
 
-              Upload JSON, CSV, LOG or TXT incident files
-
+              Upload JSON CSV LOG TXT
             </p>
 
-            <p className="text-sm text-slate-500 mt-2">
+            <p className="text-slate-500 text-sm mt-2">
 
-              or click to upload
-
+              Drag & drop or click to upload
             </p>
 
           </div>
@@ -687,9 +659,9 @@ function App() {
               setLogs(e.target.value)
             }
 
-            className="w-full h-72 mt-6 bg-slate-900/70 border border-slate-700 rounded-2xl p-5 outline-none text-sm"
+            className="w-full h-72 mt-6 bg-slate-900/70 border border-slate-700 rounded-2xl p-5 outline-none text-sm text-slate-200"
 
-            placeholder="Preview uploaded incident logs..."
+            placeholder="Paste or upload logs..."
           />
 
 
@@ -697,14 +669,14 @@ function App() {
 
             onClick={handleAnalyze}
 
-            className="mt-6 w-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition-all duration-300"
+            className="mt-6 w-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-400 py-4 rounded-2xl font-bold text-lg hover:scale-[1.02] transition-all duration-300 shadow-lg"
           >
 
             {
 
               loading
 
-              ? "AI Agents Investigating..."
+              ? "AI Investigating..."
 
               : "Analyze Incident"
             }
@@ -718,7 +690,7 @@ function App() {
 
           initial={{
             opacity: 0,
-            x: 40
+            x: 30
           }}
 
           animate={{
@@ -726,14 +698,13 @@ function App() {
             x: 0
           }}
 
-          className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-8 shadow-2xl"
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-xl"
         >
 
           <div className="flex items-center gap-3 mb-6">
 
             <ServerCrash
               className="text-pink-400"
-              size={30}
             />
 
             <h2 className="text-3xl font-bold">
@@ -755,7 +726,7 @@ function App() {
 
                 <Pie
 
-                  data={chartData}
+                  data={severityData}
 
                   dataKey="value"
 
@@ -770,7 +741,7 @@ function App() {
 
                   {
 
-                    chartData.map(
+                    severityData.map(
 
                       (entry, index) => (
 
@@ -779,10 +750,7 @@ function App() {
                           key={index}
 
                           fill={
-                            COLORS[
-                              index %
-                              COLORS.length
-                            ]
+                            COLORS[index]
                           }
                         />
                       )
@@ -821,7 +789,7 @@ function App() {
 
             initial={{
               opacity: 0,
-              y: 60
+              y: 40
             }}
 
             animate={{
@@ -829,14 +797,22 @@ function App() {
               y: 0
             }}
 
-            className="mx-10 mt-10 mb-20 bg-white/10 backdrop-blur-lg border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10"
+            className="mx-10 mt-10 mb-20 bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-xl"
           >
 
-            <h2 className="text-4xl font-bold mb-8 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+            <div className="flex items-center gap-3 mb-8">
 
-              AI Incident Intelligence Report
+              <AlertTriangle
+                className="text-cyan-400"
+              />
 
-            </h2>
+              <h2 className="text-4xl font-bold text-cyan-400">
+
+                AI Incident Intelligence Report
+
+              </h2>
+
+            </div>
 
             <pre className="whitespace-pre-wrap text-sm leading-8 text-slate-200">
 
